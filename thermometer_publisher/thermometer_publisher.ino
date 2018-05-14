@@ -2,50 +2,37 @@
 #include <DHT.h>
 #include <DHT_U.h>
 
-#define DHTPIN            2         // Pin which is connected to the DHT sensor.
+#include <ESP8266WiFi.h>
+#include <MQTT.h>
 
-// Uncomment the type of sensor in use:
-#define DHTTYPE           DHT11     // DHT 11 
-//#define DHTTYPE           DHT22     // DHT 22 (AM2302)
-//#define DHTTYPE           DHT21     // DHT 21 (AM2301)
+#define CLIENT_ID "client1"
 
-// See guide for details on sensor wiring and usage:
-//   https://learn.adafruit.com/dht/overview
+MQTT myMqtt(CLIENT_ID, "192.168.2.2", 1883);
+
+char ssid[] = "yourssid";
+char pass[] = "yourpasswd";
+
+#define DHTPIN            2         
+#define DHTTYPE           DHT11     
 
 DHT_Unified dht(DHTPIN, DHTTYPE);
 
 uint32_t delayMS;
-
-
-#include <ESP8266WiFi.h>
-#include <MQTT.h>
 
 void myDataCb(String& topic, String& data);
 void myPublishedCb();
 void myDisconnectedCb();
 void myConnectedCb();
 
-#define CLIENT_ID "client1"
-
-// create MQTT object
-MQTT myMqtt(CLIENT_ID, "192.168.2.200", 1883);
-
-//
-const char* ssid     = "ESPap";
-const char* password = "thereisnospoon";
-
 bool mqttConnected=false;
 
-//
 void setup() {
   Serial.begin(115200);
   delay(1000);
 
-  // ============================================================
-  // Initialize device.
   dht.begin();
   Serial.println("DHTxx Unified Sensor Example");
-  // Print temperature sensor details.
+
   sensor_t sensor;
   dht.temperature().getSensor(&sensor);
   Serial.println("------------------------------------");
@@ -57,7 +44,7 @@ void setup() {
   Serial.print  ("Min Value:    "); Serial.print(sensor.min_value); Serial.println(" *C");
   Serial.print  ("Resolution:   "); Serial.print(sensor.resolution); Serial.println(" *C");  
   Serial.println("------------------------------------");
-  // Print humidity sensor details.
+
   dht.humidity().getSensor(&sensor);
   Serial.println("------------------------------------");
   Serial.println("Humidity");
@@ -68,16 +55,15 @@ void setup() {
   Serial.print  ("Min Value:    "); Serial.print(sensor.min_value); Serial.println("%");
   Serial.print  ("Resolution:   "); Serial.print(sensor.resolution); Serial.println("%");  
   Serial.println("------------------------------------");
-  // Set delay between sensor readings based on sensor details.
+
   delayMS = sensor.min_delay / 1000;
-  // ============================================================
 
   Serial.println();
   Serial.println();
   Serial.print("Connecting to ");
   Serial.println(ssid);
   
-  WiFi.begin(ssid, password);
+  WiFi.begin(ssid, pass);
   
   while (WiFi.status() != WL_CONNECTED) {
     delay(500);
@@ -91,7 +77,6 @@ void setup() {
 
   Serial.println("Connecting to MQTT server");  
 
-  // setup callbacks
   myMqtt.onConnected(myConnectedCb);
   myMqtt.onDisconnected(myDisconnectedCb);
   myMqtt.onPublished(myPublishedCb);
@@ -103,8 +88,8 @@ void setup() {
     delay(200);
     Serial.print(".");
     }
-  Serial.println("subscribe to topic...");
-  myMqtt.subscribe("/IoT-hw/#");
+  /*Serial.println("subscribe to topic...");
+  myMqtt.subscribe("/IoT-hw/#");*/
   delay(10);
 }
 
@@ -113,7 +98,6 @@ void loop() {
 
   int value = 0;
 
-  // ========================================================================================
   // Delay between measurements.
   delay(delayMS);
   // Get temperature event and print its value.
@@ -138,9 +122,6 @@ void loop() {
     Serial.print(event.relative_humidity);
     Serial.println("%");
   }
-  // ========================================================================================
-
-
 
   String topic("/IoT-hw");
   topic += "/temperature";
@@ -156,10 +137,6 @@ void loop() {
   delay(1000);
 }
 
-
-/*
- * 
- */
 void myConnectedCb()
 {
   Serial.println("connected to MQTT server");

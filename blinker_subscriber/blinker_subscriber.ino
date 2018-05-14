@@ -10,22 +10,18 @@ void myConnectedCb();
 #define CLIENT_ID "ap"
 #define TOPIC "/IoT-hw/temperature"
 
+MQTT myMqtt(CLIENT_ID, "192.168.2.2", 1883);
 
-// create MQTT
-MQTT myMqtt(CLIENT_ID, "192.168.2.200", 1883);
-
-
-
-char ssid[] = "yourssid";    // your network SSID (name)
-char pass[] = "yourpasswd";  // your network password
+char ssid[] = "yourssid";
+char pass[] = "yourpasswd";
 
 void setup() {
   pinMode(LED_BUILTIN, OUTPUT);
-Serial.begin(115200);
+  
+  Serial.begin(115200);
   Serial.println();
   Serial.println();
-
-  // We start by connecting to a WiFi network
+  
   Serial.print("Connecting to ");
   Serial.println(ssid);
   WiFi.begin(ssid, pass);
@@ -40,10 +36,8 @@ Serial.begin(115200);
   Serial.println("IP address: ");
   Serial.println(WiFi.localIP());
 
-
   Serial.println("Connecting to MQTT server");  
 
-  // setup callbacks
   myMqtt.onConnected(myConnectedCb);
   myMqtt.onDisconnected(myDisconnectedCb);
   myMqtt.onPublished(myPublishedCb);
@@ -54,15 +48,15 @@ Serial.begin(115200);
 
   Serial.println("subscribe to topic...");
   myMqtt.subscribe(TOPIC);
-Serial.println("finishd subsribe");
+
   delay(10);
 }
 bool hot = false;
 void loop() {
   if (hot) {
-  digitalWrite(LED_BUILTIN, LOW);   // turn the LED on (HIGH is the voltage level)
-  delay(100);                       // wait for a second
-  digitalWrite(LED_BUILTIN, HIGH);    // turn the LED off by making the voltage LOW
+  digitalWrite(LED_BUILTIN, LOW);
+  delay(100);                    
+  digitalWrite(LED_BUILTIN, HIGH);
   delay(100);
   } else {
     digitalWrite(LED_BUILTIN, HIGH);
